@@ -1,0 +1,86 @@
+
+
+
+Create table 
+CREATE TABLE migration(dummy,orcid_id,country,organization_name,Ringgold_id,start_year,end_year,affiliation_type,affiliation_role,is_phd);
+
+import csv file
+
+Find all russian Universities :
+select distinct organization_name from migration where country='RU' and affiliation_type='EDUCATION';
+
+
+Look for MIPT:
+
+create table decode_uni(organization_name,code);
+
+insert into decode_uni(organization_name,code) values
+('Moscow Institute of Physics and Technology','MIPT'),
+('МФТИ','MIPT'), ('MIPT','MIPT'), ('MSU','MSU'),
+('Lomonosov State University','MSU'),
+(' Lomonosov Moscow State University','MSU'),
+('МГУ им. М.В. Ломоносова','MSU'),
+('M. V. Lomonosov Moscow State University','MSU'),
+('M.V. Lomonosov Moscow State University','MSU'),
+('Lomonosov Moscow State Univercity','MSU'),
+('Moscow State University Lomonosov','MSU'),
+('Moscow State University M.V. Lomonosov','MSU'),
+('Moscow State University','MSU'),
+(' Moscow State University','MSU'),
+('Moscow State University (Lomonosov)','MSU'),
+('МГУ','MSU'),
+('Moscow State University named after M.V.Lomonosov','MSU'),
+('Moscow State University named after Lomonosov','MSU'),
+('MV Lomonosov Moscow State University','MSU'),
+('MGU','MSU'),
+('M.V.Lomonosov Moscow State University ','MSU'),
+('Lomonosov Moscow State University  ','MSU'),
+('Moscow State Univercity','MSU'),
+('Moskovskij gosudarstvennyj universitet imeni M V Lomonosova','MSU'),
+('Lomonosov Moscow State University','MSU'),
+('Moscow State University','MSU'),
+('Saint Petersburg State University','SPbSU'),
+('St. Petersburg State University','SPbSU'),
+('Lomonosov Moscow State University ','MSU'),
+('Leningrad State University','SPbSU'),
+('Moscow Engineering Physics Institute','MIPT'),
+('Moscow State University ','MSU'),
+('Санкт-Петербургский государственный университет','MSU'),
+('Saint-Petersburg State University Faculty of Physics','SPbSU'),
+('Saint-Petersburg State University ','MSU'),
+('MIT','MIT'),
+('Massachusetts Institute of Technology','MIT');
+
+
+
+# extract ORCID with know affiliations at education only
+create table person(orcid_id);
+insert into person(orcid_id) select distinct orcid_id from migration where affiliation_type='EDUCATION';
+
+create table person_education(orcid_id,code);
+
+insert into person_education(orcid_id,code) select p.orcid_id,u.code from person as p,migration as m,decode_uni as u 
+where 
+m.orcid_id=p.orcid_id and
+m.affiliation_type='EDUCATION' and
+m.organization_name=u.organization_name;
+
+# create index
+create index orcid_id on migration(orcid_id);
+
+create table person_last_location(orcid_id,country);
+# selecting orcid 
+insert into person_last_location(orcid_id,country) 
+ select p.orcid_id,
+        (select m.country from migration as m where m.orcid_id=p.orcid_id order by end_year desc limit 1)
+ from person as p;
+
+
+create table person_education_final(orcid_id,code,country);
+ # see who went were
+ 
+insert into person_education_final(orcid_id,code,country) 
+ select p.orcid_id,p.code,f.country 
+ from person_education as p, person_last_location as f
+ where p.orcid_id=f.orcid_id;
+ 
