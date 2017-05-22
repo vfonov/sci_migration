@@ -57,9 +57,9 @@ insert into decode_uni(organization_name,code) values
 create table person(orcid_id);
 insert into person(orcid_id) select distinct orcid_id from migration where affiliation_type='EDUCATION';
 
-create table person_education(orcid_id,code);
+create table person_education(orcid_id,code,graduated);
 
-insert into person_education(orcid_id,code) select p.orcid_id,u.code from person as p,migration as m,decode_uni as u 
+insert into person_education(orcid_id,code,graduated) select p.orcid_id,u.code,m.end_year from person as p,migration as m,decode_uni as u 
 where 
 m.orcid_id=p.orcid_id and
 m.affiliation_type='EDUCATION' and
@@ -75,12 +75,11 @@ insert into person_last_location(orcid_id,country)
         (select m.country from migration as m where m.orcid_id=p.orcid_id order by end_year desc limit 1)
  from person as p;
 
-
-create table person_education_final(orcid_id,code,country);
+create table person_education_final(orcid_id,code,country,graduated);
  # see who went were
  
-insert into person_education_final(orcid_id,code,country) 
- select p.orcid_id,p.code,f.country 
+insert into person_education_final(orcid_id,code,country,graduated) 
+ select p.orcid_id,p.code,f.country,p.graduated
  from person_education as p, person_last_location as f
  where p.orcid_id=f.orcid_id;
  
