@@ -1,4 +1,5 @@
 library(tidyverse)
+
 library(maptools)
 library(mapproj)
 library(rgeos)
@@ -49,12 +50,11 @@ if( !file.exists(file)) {
     download.file(URL, file) 
 }
 
-world <- readOGR(file, "OGRGeoJSON")
-
+world <- readOGR("https://github.com/nvkelso/natural-earth-vector/raw/v2.0/geojson/ne_50m_admin_0_countries.geojson", "OGRGeoJSON")
+#world <- map_data("world")
+#world <- world[world$region != "Antarctica",] 
 # remove antarctica
 world <- world[!world$iso_a3 %in% c("ATA"),]
-#project(?)
-#world <- spTransform(world, CRS("+proj=wintri"))
 
 
 outline <- bbox(world)
